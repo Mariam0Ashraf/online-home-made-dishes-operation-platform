@@ -1,5 +1,6 @@
 package com.example.javaeeproject;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.Date;

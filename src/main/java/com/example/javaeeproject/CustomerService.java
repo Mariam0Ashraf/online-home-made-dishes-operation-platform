@@ -1,5 +1,8 @@
 package com.example.javaeeproject;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -43,8 +46,22 @@ public class CustomerService {
             item.setPriceAtPurchase(item.getDish().getPrice());
             order.getItems().add(item);
         }
-
         em.persist(order);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String orderJson = mapper.writeValueAsString(order);
+            try (Connection conn = RabbitMQService.getConnection();
+                 Channel channel = conn.createChannel()) {
+
+                channel.exchangeDeclare("order_exchange", "direct", true);
+                channel.basicPublish("order_exchange", "OrderPlaced", null, orderJson.getBytes());
+
+                System.out.println("Order published to RabbitMQ: " + order.getId());
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return order;
     }
 

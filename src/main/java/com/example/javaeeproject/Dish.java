@@ -10,7 +10,7 @@ public class Dish {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private BigDecimal price;
+    private double price;
     private int availableQuantity;
     private boolean isActive = true;
 
@@ -29,10 +29,10 @@ public class Dish {
     public void setName(String name) {
         this.name = name;
     }
-    public BigDecimal getPrice() {
+    public double getPrice() {
         return price;
     }
-    public void setPrice(BigDecimal price) {
+    public void setPrice(double price) {
         this.price = price;
     }
     public int getAvailableQuantity() {

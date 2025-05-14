@@ -1,5 +1,6 @@
 package com.example.javaeeproject;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -17,7 +18,7 @@ public class OrderItem {
     private Order order;
 
     private int quantity;
-    private BigDecimal priceAtPurchase;
+    private double priceAtPurchase;
 
     public Long getId() {
         return id;
@@ -43,10 +44,10 @@ public class OrderItem {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
-    public BigDecimal getPriceAtPurchase() {
+    public double getPriceAtPurchase() {
         return priceAtPurchase;
     }
-    public void setPriceAtPurchase(BigDecimal priceAtPurchase) {
+    public void setPriceAtPurchase(double priceAtPurchase) {
         this.priceAtPurchase = priceAtPurchase;
     }
 
