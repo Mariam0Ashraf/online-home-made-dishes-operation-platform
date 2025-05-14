@@ -16,6 +16,7 @@ public class Customer {
     private String email;
     private String password;
     private Date registrationDate;
+    private double balance;
     public Long getId() {
         return id;
     }
@@ -46,5 +47,7 @@ public class Customer {
     public void setRegistrationDate(Date registrationDate) {
         this.registrationDate = registrationDate;
     }
+    public double getBalance() { return balance; }
+    public void setBalance(double balance) { this.balance = balance; }
 
 }
