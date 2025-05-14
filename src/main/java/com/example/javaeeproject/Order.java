@@ -2,7 +2,8 @@ package com.example.javaeeproject;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -12,56 +13,49 @@ public class Order {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "dish_id")
-    private Dish dish;
+    private Customer customer;
 
-    @ManyToOne
-    @JoinColumn(name = "customer_id")
-    private User customer;
+    private Date orderDate;
+    private String status;
+    private String shippingCompanyName;
 
-    @Column(nullable = false)
-    private Integer quantity;
-
-    @Column(nullable = false)
-    private LocalDateTime orderDate;
-
-    private String shippingCompany;
-
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    private List<OrderItem> items;
     public Long getId() {
         return id;
     }
     public void setId(Long id) {
         this.id = id;
     }
-    public Dish getDish() {
-        return dish;
-    }
-    public void setDish(Dish dish) {
-        this.dish = dish;
-    }
-    public User getCustomer() {
+    public Customer getCustomer() {
         return customer;
     }
-    public void setCustomer(User customer) {
+    public void setCustomer(Customer customer) {
         this.customer = customer;
     }
-    public Integer getQuantity() {
-        return quantity;
-    }
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-    public LocalDateTime getOrderDate() {
+    public Date getOrderDate() {
         return orderDate;
     }
-    public void setOrderDate(LocalDateTime orderDate) {
+    public void setOrderDate(Date orderDate) {
         this.orderDate = orderDate;
     }
-    public String getShippingCompany() {
-        return shippingCompany;
+    public String getStatus() {
+        return status;
     }
-    public void setShippingCompany(String shippingCompany) {
-        this.shippingCompany = shippingCompany;
+    public void setStatus(String status) {
+        this.status = status;
+    }
+    public String getShippingCompanyName() {
+        return shippingCompanyName;
+    }
+    public void setShippingCompanyName(String shippingCompanyName) {
+        this.shippingCompanyName = shippingCompanyName;
+    }
+    public List<OrderItem> getItems() {
+        return items;
+    }
+    public void setItems(List<OrderItem> items) {
+        this.items = items;
     }
 
 }

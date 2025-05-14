@@ -2,63 +2,56 @@ package com.example.javaeeproject;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+
 @Entity
-@Table(name = "dishes")
 public class Dish {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
     private String name;
-
-    private String description;
-
-    @Column(nullable = false)
-    private Double price;
-
-    @Column(nullable = false)
-    private Integer quantity;
+    private BigDecimal price;
+    private int availableQuantity;
+    private boolean isActive = true;
 
     @ManyToOne
-    @JoinColumn(name = "company_id")
-    private Company company;
+    private CompanyRepresentative companyRep;
 
-    private Long getId(){
+    public Long getId() {
         return id;
     }
-    private void setId(Long id){
+    public void setId(Long id) {
         this.id = id;
     }
-    public String getName(){
+    public String getName() {
         return name;
     }
-    public void setName(String name){
+    public void setName(String name) {
         this.name = name;
     }
-    public String getDescription(){
-        return description;
-    }
-    public void setDescription(String description){
-        this.description = description;
-    }
-    public Double getPrice(){
+    public BigDecimal getPrice() {
         return price;
     }
-    public void setPrice(Double price){
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
-    public Integer getQuantity(){
-        return quantity;
+    public int getAvailableQuantity() {
+        return availableQuantity;
     }
-    public void setQuantity(Integer quantity){
-        this.quantity = quantity;
+    public void setAvailableQuantity(int availableQuantity) {
+        this.availableQuantity = availableQuantity;
     }
-    public Company getCompany(){
-        return company;
+    public boolean isActive() {
+        return isActive;
     }
-    public void setCompany(Company company){
-        this.company = company;
+    public void setActive(boolean active) {
+        isActive = active;
+    }
+    public CompanyRepresentative getCompanyRep() {
+        return companyRep;
+    }
+    public void setCompanyRep(CompanyRepresentative companyRep) {
+        this.companyRep = companyRep;
     }
 
 }
