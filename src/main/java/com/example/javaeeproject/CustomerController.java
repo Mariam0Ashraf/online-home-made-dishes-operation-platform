@@ -17,6 +17,7 @@ public class CustomerController {
     private CustomerService service;
 
     @Path("/register")
+    @POST
     public Response register(Customer customer) {
         service.register(customer);
         return Response.ok("Customer registered").build();
