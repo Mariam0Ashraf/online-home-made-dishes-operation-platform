@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Home</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          background: #f5f5f5;
+          margin: 0;
+          padding: 0;
+        }
+        header {
+          background-color: #0077cc;
+          color: white;
+          padding: 15px;
+          text-align: center;
+        }
+        section {
+          padding: 20px;
+        }
+        h2 {
+          color: #0077cc;
+        }
+        .order, .dish, .order-item {
+          background: white;
+          padding: 15px;
+          margin-bottom: 10px;
+          border-radius: 8px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button {
+          padding: 8px 12px;
+          background-color: #0077cc;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+        button:hover {
+          background-color: #005fa3;
+        }
+        input[type="number"] {
+          width: 60px;
+          margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Welcome!</h1>
+</header>
+
+<section>
+    <h2>Your Orders</h2>
+    <div id="ordersContainer">Loading orders...</div>
+</section>
+
+<section>
+    <h2>Place a New Order</h2>
+    <form id="orderForm">
+        <div id="dishList">Loading dishes...</div>
+        <button type="submit">Place Order</button>
+    </form>
+</section>
+
+<script>
+    const customerId = localStorage.getItem("customerId");
+
+    async function fetchOrders() {
+      try {
+        const res = await fetch(`/api/customer/orders/${customerId}`);
+        const orders = await res.json();
+
+        const container = document.getElementById("ordersContainer");
+        container.innerHTML = "";
+
+        if (orders.length === 0) {
+          container.innerHTML = "<p>No orders found.</p>";
+          return;
+        }
+
+        orders.forEach(order => {
+          const div = document.createElement("div");
+          div.className = "order";
+          div.innerHTML = `
+            <p><strong>Order ID:</strong> ${order.id}</p>
+            <p><strong>Status:</strong> ${order.status}</p>
+            <p><strong>Date:</strong> ${new Date(order.orderDate).toLocaleString()}</p>
+            <div>
+              <strong>Items:</strong>
+              <ul>
+                ${order.items.map(item => `
+                  <li class="order-item">
+                    ${item.dish.name} - ${item.quantity} pcs - $${item.priceAtPurchase}
+                  </li>`).join("")}
+              </ul>
+            </div>
+            ${order.status === 'PENDING' ? `<button onclick="confirmOrder(${order.id})">Confirm Order</button>` : ''}
+          `;
+          container.appendChild(div);
+        });
+
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+        document.getElementById("ordersContainer").innerHTML = "<p>Failed to load orders.</p>";
+      }
+    }
+
+   async function fetchDishes() {
+  try {
+    const res = await fetch(`/api/dishes`);
+    const dishes = await res.json();
+
+    const list = document.getElementById("dishList");
+    list.innerHTML = "";
+
+    if (dishes.length === 0) {
+      list.innerHTML = "<p>No dishes available.</p>";
+      return;
+    }
+
+    dishes.forEach(dish => {
+      const isAvailable = dish.availableQuantity > 0;
+      const div = document.createElement("div");
+      div.className = "dish";
+      div.innerHTML = `
+        <label>
+          <input type="checkbox" name="dish" value="${dish.id}" data-name="${dish.name}" data-price="${dish.price}" ${!isAvailable ? 'disabled' : ''}>
+          ${dish.name} ($${dish.price.toFixed(2)})
+          <input type="number" name="quantity-${dish.id}" min="1" max="${dish.availableQuantity}" value="1" ${!isAvailable ? 'disabled' : ''}>
+          ${!isAvailable ? '<span style="color: red; margin-left: 10px;">Out of stock</span>' : ''}
+        </label>
+      `;
+      list.appendChild(div);
+    });
+  } catch (error) {
+    console.error("Failed to load dishes", error);
+    document.getElementById("dishList").innerHTML = "<p>Could not load dishes.</p>";
+  }
+}
+
+
+
+    async function placeOrder(e) {
+      e.preventDefault();
+
+      const checkedBoxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="dish"]:checked'));
+      if (checkedBoxes.length === 0) {
+        alert("Please select at least one dish.");
+        return;
+      }
+
+      const items = checkedBoxes.map(box => {
+        const dishId = box.value;
+        const quantity = parseInt(document.querySelector(`input[name="quantity-${dishId}"]`).value);
+        return {
+          dish: { id: dishId },
+          quantity: quantity
+        };
+      });
+
+      try {
+        const res = await fetch(`/api/customer/order/${customerId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(items)
+        });
+
+        if (res.ok) {
+          alert("Order placed successfully!");
+          fetchOrders();
+        } else {
+          alert("Failed to place order.");
+        }
+      } catch (err) {
+        console.error("Error placing order:", err);
+        alert("Error placing order.");
+      }
+    }
+
+    async function confirmOrder(orderId) {
+      try {
+        const res = await fetch(`/api/customer/order/${orderId}/confirm`, {
+          method: "PUT"
+        });
+        if (res.ok) {
+          alert("Order confirmed.");
+          fetchOrders();
+        } else {
+          alert("Failed to confirm order.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error confirming order.");
+      }
+    }
+
+    // Initialize
+    fetchOrders();
+    fetchDishes();
+    document.getElementById("orderForm").addEventListener("submit", placeOrder);
+</script>
+
+</body>
+</html>

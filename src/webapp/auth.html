@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Unified Login & Registration</title>
+    <style>
+        body {
+          font-family: 'Segoe UI', sans-serif;
+          background: linear-gradient(to right, #74ebd5, #acb6e5);
+          display: flex;
+          justify-content: center;
+          align-items: flex-start;
+          padding: 50px 20px;
+          min-height: 100vh;
+          margin: 0;
+        }
+
+        .container {
+          background: #fff;
+          border-radius: 12px;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+          padding: 30px 40px;
+          width: 100%;
+          max-width: 400px;
+        }
+
+        .tabs {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 20px;
+          gap: 5px;
+          flex-wrap: wrap;
+        }
+
+        .tabs button {
+          flex: 1;
+          padding: 10px;
+          border: none;
+          border-radius: 6px;
+          background: #e0e0e0;
+          cursor: pointer;
+          transition: 0.3s;
+        }
+
+        .tabs button.active {
+          background: #2196f3;
+          color: white;
+          font-weight: bold;
+        }
+
+        .section {
+          display: none;
+        }
+
+        .section.active {
+          display: block;
+        }
+
+        input {
+          width: 100%;
+          padding: 10px;
+          margin-top: 10px;
+          margin-bottom: 15px;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          font-size: 14px;
+        }
+
+        button.submit-btn {
+          width: 100%;
+          padding: 12px;
+          background: #2196f3;
+          border: none;
+          color: white;
+          border-radius: 6px;
+          font-size: 16px;
+          cursor: pointer;
+          transition: background 0.3s;
+        }
+
+        button.submit-btn:hover {
+          background: #1976d2;
+        }
+
+        h2 {
+          margin-bottom: 10px;
+          color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Welcome!</h2>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showSection('customerRegister', this)">Customer Register</button>
+        <button class="tab-btn" onclick="showSection('customerLogin', this)">Customer Login</button>
+        <button class="tab-btn" onclick="showSection('repLogin', this)">Rep Login</button>
+        <button class="tab-btn" onclick="showSection('adminLogin', this)">Admin Login</button>
+    </div>
+
+    <div id="customerRegister" class="section active">
+        <input id="cr-name" placeholder="Username" />
+        <input id="cr-email" placeholder="Email" />
+        <input id="cr-password" placeholder="Password" type="password" />
+        <button class="submit-btn" onclick="registerCustomer()">Register</button>
+    </div>
+
+    <div id="customerLogin" class="section">
+        <input id="cl-email" placeholder="Email" />
+        <input id="cl-password" placeholder="Password" type="password" />
+        <button class="submit-btn" onclick="loginCustomer()">Login</button>
+    </div>
+
+    <div id="repLogin" class="section">
+        <input id="rep-company" placeholder="Company Name" />
+        <input id="rep-password" placeholder="Password" type="password" />
+        <button class="submit-btn" onclick="loginRep()">Login</button>
+    </div>
+
+    <div id="adminLogin" class="section">
+        <input id="admin-user" placeholder="Username" />
+        <input id="admin-pass" placeholder="Password" type="password" />
+        <button class="submit-btn" onclick="loginAdmin()">Login</button>
+    </div>
+</div>
+
+<script>
+    function showSection(id, btn) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    async function registerCustomer() {
+      const customer = {
+        name: document.getElementById("cr-name").value,
+        email: document.getElementById("cr-email").value,
+        password: document.getElementById("cr-password").value
+      };
+
+      const res = await fetch("/api/customer/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(customer)
+      });
+
+      alert(await res.text());
+    }
+
+    async function loginCustomer() {
+      const creds = {
+        email: document.getElementById("cl-email").value,
+        password: document.getElementById("cl-password").value
+      };
+
+      const res = await fetch("/api/customer/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(creds)
+      });
+
+      const data = await res.json();
+      alert("Customer Login Successful: " + data.name);
+      window.location.href = "Home-page.html";
+    }
+
+    async function loginRep() {
+      const creds = {
+        companyName: document.getElementById("rep-company").value,
+        password: document.getElementById("rep-password").value
+      };
+
+      const res = await fetch("/api/rep/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(creds)
+      });
+
+      const data = await res.json();
+      alert("Rep Login Successful: " + data.companyName);
+      window.location.href = "company-rep-dashboard.html";
+    }
+
+    function loginAdmin() {
+      const user = document.getElementById("admin-user").value;
+      const pass = document.getElementById("admin-pass").value;
+
+      if (user === "admin" && pass === "admin") {
+        alert("Admin Login Successful");
+        window.location.href = "admin-dashboard.html";
+      } else {
+        alert("Invalid Admin Credentials");
+      }
+    }
+</script>
+
+</body>
+</html>

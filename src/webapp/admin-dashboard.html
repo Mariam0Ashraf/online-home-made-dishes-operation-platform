@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          background: #f0f2f5;
+          padding: 40px;
+        }
+        h1 {
+          color: #333;
+        }
+        button {
+          padding: 10px 20px;
+          margin: 10px 0;
+          border: none;
+          background-color: #2196f3;
+          color: white;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        button:hover {
+          background-color: #1976d2;
+        }
+        #output {
+          margin-top: 20px;
+          white-space: pre-wrap;
+          background: #fff;
+          padding: 15px;
+          border-radius: 8px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        form {
+          margin-top: 30px;
+          background: #fff;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          max-width: 400px;
+        }
+        input[type="text"] {
+          width: 95%;
+          padding: 8px;
+          margin-top: 6px;
+          box-sizing: border-box;
+          border-radius: 4px;
+          border: 1px solid #ccc;
+        }
+        #createRepsResult {
+          margin-top: 10px;
+          white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+<h1>Welcome Admin!</h1>
+<button onclick="getCustomers()">View All Customers</button>
+<button onclick="getReps()">View All Representatives</button>
+
+<div id="output"></div>
+
+<h2>Create Company Representatives</h2>
+<form id="createRepsForm">
+    <label for="companyNames">Company Name:</label><br />
+    <input type="text" id="companyNames" name="companyNames" placeholder="Company Name" />
+    <br /><br />
+    <button type="submit">Create Representatives</button>
+</form>
+<div id="createRepsResult"></div>
+
+<script>
+    async function getCustomers() {
+      const res = await fetch('/api/admin/customers');
+      const data = await res.json();
+      document.getElementById('output').innerText = JSON.stringify(data, null, 2);
+    }
+
+    async function getReps() {
+      const res = await fetch('/api/admin/reps');
+      const data = await res.json();
+      document.getElementById('output').innerText = JSON.stringify(data, null, 2);
+    }
+
+    const form = document.getElementById('createRepsForm');
+    const resultDiv = document.getElementById('createRepsResult');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('companyNames').value.trim();
+      if (!input) {
+        alert('Please enter at least one company name.');
+        return;
+      }
+      const companies = input.split(',').map(name => name.trim()).filter(name => name.length > 0);
+
+      try {
+        const res = await fetch('/api/admin/create-reps', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(companies)
+        });
+
+        if (res.ok) {
+          const reps = await res.json();
+          let output = 'Created Representatives:\n\n';
+          reps.forEach(rep => {
+            output += `Company: ${rep.companyName}\nPassword: ${rep.password}\n\n`;
+          });
+          resultDiv.style.color = 'green';
+          resultDiv.textContent = output;
+          form.reset();
+        } else {
+          resultDiv.style.color = 'red';
+          resultDiv.textContent = 'Failed to create representatives.';
+        }
+      } catch (error) {
+        resultDiv.style.color = 'red';
+        resultDiv.textContent = 'Error: ' + error.message;
+      }
+    });
+</script>
+</body>
+</html>

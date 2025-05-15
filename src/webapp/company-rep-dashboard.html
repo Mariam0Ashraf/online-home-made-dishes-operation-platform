@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Company Representative Dashboard</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          padding: 40px;
+          background-color: #f9f9f9;
+        }
+        h1 {
+          color: #333;
+        }
+        button {
+          margin: 10px 0;
+          padding: 10px 15px;
+          border: none;
+          background: #28a745;
+          color: white;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+        button:hover {
+          background-color: #218838;
+        }
+        input, textarea {
+          width: 95%;
+          margin: 5px 0;
+          padding: 8px;
+          border-radius: 4px;
+          border: 1px solid #ccc;
+        }
+        #output {
+          white-space: pre-wrap;
+          background: #fff;
+          padding: 15px;
+          margin-top: 20px;
+          border-radius: 5px;
+          box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        form {
+          background: #fff;
+          padding: 20px;
+          margin-top: 20px;
+          border-radius: 8px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+<h1>Welcome, Company Representative!</h1>
+
+<input type="hidden" id="repId" />
+
+<button onclick="fetchCurrentDishes()">View Current Dishes</button>
+<button onclick="fetchSales()">View Sold Dishes</button>
+
+<div id="output"></div>
+
+<h2>Add New Dish</h2>
+<form id="addDishForm">
+    <input type="text" id="dishName" placeholder="Dish Name" required />
+    <textarea id="dishDesc" placeholder="Description" required></textarea>
+    <input type="number" id="dishPrice" placeholder="Price" required />
+    <input type="number" id="dishQuantity" placeholder="Quantity" required />
+    <button type="submit">Add Dish</button>
+</form>
+
+<h2>Update Dish</h2>
+<form id="updateDishForm">
+    <input type="number" id="updateDishId" placeholder="Dish ID" required />
+    <input type="text" id="updateDishName" placeholder="Dish Name" required />
+    <textarea id="updateDishDesc" placeholder="Description" required></textarea>
+    <input type="number" id="updateDishPrice" placeholder="Price" required />
+    <input type="number" id="updateDishQuantity" placeholder="Quantity" required />
+    <button type="submit">Update Dish</button>
+</form>
+
+<script>
+    const repId = sessionStorage.getItem("repId");
+    document.getElementById("repId").value = repId;
+
+    async function fetchCurrentDishes() {
+      const res = await fetch(`/api/rep/dishes/${repId}`);
+      const data = await res.json();
+      document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+    }
+
+    async function fetchSales() {
+      const res = await fetch(`/api/rep/sales/${repId}`);
+      const data = await res.json();
+      document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+    }
+
+    document.getElementById("addDishForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const body = {
+        name: document.getElementById("dishName").value,
+        description: document.getElementById("dishDesc").value,
+        price: parseFloat(document.getElementById("dishPrice").value),
+        quantity: parseInt(document.getElementById("dishQuantity").value),
+        isActive: true,
+        companyRep: { id: parseInt(repId) }
+      };
+
+      const res = await fetch("/api/rep/dishes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const text = await res.text();
+      alert(text);
+    });
+
+    document.getElementById("updateDishForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const body = {
+        id: parseInt(document.getElementById("updateDishId").value),
+        name: document.getElementById("updateDishName").value,
+        description: document.getElementById("updateDishDesc").value,
+        price: parseFloat(document.getElementById("updateDishPrice").value),
+        quantity: parseInt(document.getElementById("updateDishQuantity").value),
+        isActive: true,
+        companyRep: { id: parseInt(repId) }
+      };
+
+      const res = await fetch("/api/rep/dishes", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const text = await res.text();
+      alert(text);
+    });
+</script>
+</body>
+</html>

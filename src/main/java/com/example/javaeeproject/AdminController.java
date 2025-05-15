@@ -19,8 +19,8 @@ public class AdminController {
     @POST
     @Path("/create-reps")
     public Response createReps(List<String> companyNames) {
-        service.createCompanyRepresentatives(companyNames);
-        return Response.ok("Representatives created").build();
+        List<CompanyRepresentative> reps = service.createCompanyRepresentatives(companyNames);
+        return Response.ok(reps).build();
     }
 
     @GET
