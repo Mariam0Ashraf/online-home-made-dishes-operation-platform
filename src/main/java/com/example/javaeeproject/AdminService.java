@@ -4,7 +4,6 @@ import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 @Stateless
@@ -12,19 +11,16 @@ public class AdminService {
     @Inject
     private EntityManager em;
 
-    public List<CompanyRepresentative> createCompanyRepresentatives(List<String> companyNames) {
-        List<CompanyRepresentative> createdReps = new ArrayList<>();
-
+    public void createCompanyRepresentatives(List<String> companyNames) {
         for (String name : companyNames) {
             CompanyRepresentative rep = new CompanyRepresentative();
             rep.setCompanyName(name);
-            String generatedPassword = UUID.randomUUID().toString().substring(0, 8);
-            rep.setPassword(generatedPassword);
-
+            String password = UUID.randomUUID().toString();
+            rep.setPassword(password);
             em.persist(rep);
-            createdReps.add(rep);
+
+            System.out.println("Sent password " + password + " to " + name);
         }
-        return createdReps;
     }
 
     public List<Customer> listAllCustomers() {

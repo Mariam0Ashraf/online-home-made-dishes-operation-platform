@@ -8,7 +8,6 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 import java.util.Map;
-
 @RequestScoped
 @Path("/customer")
 @Produces(MediaType.APPLICATION_JSON)
@@ -39,15 +38,16 @@ public class CustomerController {
 
     @POST
     @Path("/order/{customerId}")
-    public Response placeOrder(@PathParam("customerId") Long customerId, List<OrderItem> items) {
-        Order order = service.placeOrder(customerId, items);
-        return Response.ok(order).build();
-    }
-
-    @PUT
-    @Path("/order/{id}/confirm")
-    public Response confirm(@PathParam("id") Long id) {
-        service.confirmOrder(id);
-        return Response.ok("Order confirmed").build();
+    public Response placeOrder(
+            @PathParam("customerId") Long customerId,
+            List<OrderItem> items
+    ) {
+        try {
+            Order order = service.placeOrder(customerId, items);
+            return Response.ok(order).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(e.getMessage()).build();
+        }
     }
 }
