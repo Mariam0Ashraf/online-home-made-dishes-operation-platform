@@ -10,7 +10,6 @@ import jakarta.persistence.PersistenceContext;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Random;
 
 @Singleton
 @Startup
@@ -18,6 +17,10 @@ public class PaymentService {
     private static final String INVENTORY_QUEUE = "inventory_queue";
     private static final String LOG_EXCHANGE = "log_exchange";
     private static final String NOTIFICATIONS_EXCHANGE = "notifications_exchange";
+
+    @PersistenceContext
+    private EntityManager em;
+
     @PostConstruct
     public void init() {
         new Thread(() -> {
@@ -28,6 +31,7 @@ public class PaymentService {
             }
         }).start();
     }
+
     public void start() throws Exception {
         Connection connection = RabbitMQService.getConnection();
         Channel channel = connection.createChannel();
@@ -57,13 +61,11 @@ public class PaymentService {
         };
         channel.basicConsume(INVENTORY_QUEUE, true, callback, tag -> {});
     }
-    @PersistenceContext
-    private EntityManager em;
 
-    private boolean processPayment(Order order) {
+    public boolean processPayment(Order order) { // Changed to public
         Customer customer = em.find(Customer.class, order.getCustomer().getId());
         double total = order.getItems().stream()
-                .mapToDouble(i -> i.getQuantity() * i.getDish().getPrice())
+                .mapToDouble(i -> i.getQuantity() * i.getPriceAtPurchase())
                 .sum();
 
         if (customer.getBalance() >= total) {
@@ -74,6 +76,7 @@ public class PaymentService {
             return false;
         }
     }
+
     private void log(Channel channel, String severity, String message) throws IOException {
         channel.exchangeDeclare(LOG_EXCHANGE, BuiltinExchangeType.TOPIC, true);
         channel.basicPublish(LOG_EXCHANGE, severity, null, message.getBytes(StandardCharsets.UTF_8));

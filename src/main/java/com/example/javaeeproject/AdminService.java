@@ -1,27 +1,30 @@
 package com.example.javaeeproject;
 
 import jakarta.ejb.Stateless;
-import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
 @Stateless
 public class AdminService {
     @PersistenceContext
     private EntityManager em;
 
-    public void createCompanyRepresentatives(List<String> companyNames) {
+    public List<CompanyRepresentative> createCompanyRepresentatives(List<String> companyNames) {
+        List<CompanyRepresentative> reps = new ArrayList<>(); // Fixed: Collect created reps
         for (String name : companyNames) {
             CompanyRepresentative rep = new CompanyRepresentative();
             rep.setCompanyName(name);
             String password = UUID.randomUUID().toString();
             rep.setPassword(password);
             em.persist(rep);
-
+            reps.add(rep); // Add to list
             System.out.println("Sent password " + password + " to " + name);
         }
+        return reps; // Return actual list instead of null
     }
 
     public List<Customer> listAllCustomers() {

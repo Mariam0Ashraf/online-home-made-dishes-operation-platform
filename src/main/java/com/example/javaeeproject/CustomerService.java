@@ -66,7 +66,8 @@ public class CustomerService {
             throw new IllegalArgumentException("Order total must be at least $" + minimumCharge);
         }
 
-        if (!paymentService.processPayment(totalAmount)) {
+        // Fixed: Pass order instead of totalAmount
+        if (!paymentService.processPayment(order)) {
             order.setStatus("CANCELLED");
             em.persist(order);
             throw new RuntimeException("Payment failed");
