@@ -24,7 +24,7 @@
         button:hover {
           background-color: #218838;
         }
-        input, textarea {
+        input {
           width: 95%;
           margin: 5px 0;
           padding: 8px;
@@ -61,7 +61,6 @@
 <h2>Add New Dish</h2>
 <form id="addDishForm">
     <input type="text" id="dishName" placeholder="Dish Name" required />
-    <textarea id="dishDesc" placeholder="Description" required></textarea>
     <input type="number" id="dishPrice" placeholder="Price" required />
     <input type="number" id="dishQuantity" placeholder="Quantity" required />
     <button type="submit">Add Dish</button>
@@ -71,7 +70,6 @@
 <form id="updateDishForm">
     <input type="number" id="updateDishId" placeholder="Dish ID" required />
     <input type="text" id="updateDishName" placeholder="Dish Name" required />
-    <textarea id="updateDishDesc" placeholder="Description" required></textarea>
     <input type="number" id="updateDishPrice" placeholder="Price" required />
     <input type="number" id="updateDishQuantity" placeholder="Quantity" required />
     <button type="submit">Update Dish</button>
@@ -79,7 +77,12 @@
 
 <script>
     const repId = sessionStorage.getItem("repId");
-    document.getElementById("repId").value = repId;
+    if (!repId) {
+      alert("No repId found in sessionStorage");
+      // optionally redirect or disable form
+    } else {
+      document.getElementById("repId").value = repId;
+    }
 
     async function fetchCurrentDishes() {
       const res = await fetch(`http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/dishes/${repId}`);
@@ -97,12 +100,12 @@
       e.preventDefault();
       const body = {
         name: document.getElementById("dishName").value,
-        description: document.getElementById("dishDesc").value,
         price: parseFloat(document.getElementById("dishPrice").value),
-        quantity: parseInt(document.getElementById("dishQuantity").value),
+        availableQuantity: parseInt(document.getElementById("dishQuantity").value),
         isActive: true,
         companyRep: { id: parseInt(repId) }
-      };
+      };console.log(JSON.stringify(body));
+
 
       const res = await fetch("http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/dishes", {
         method: "POST",
@@ -119,9 +122,8 @@
       const body = {
         id: parseInt(document.getElementById("updateDishId").value),
         name: document.getElementById("updateDishName").value,
-        description: document.getElementById("updateDishDesc").value,
         price: parseFloat(document.getElementById("updateDishPrice").value),
-        quantity: parseInt(document.getElementById("updateDishQuantity").value),
+        availableQuantity: parseInt(document.getElementById("updateDishQuantity").value),
         isActive: true,
         companyRep: { id: parseInt(repId) }
       };

@@ -1,10 +1,13 @@
 package com.example.javaeeproject;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 
 @Entity
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Dish {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,6 +19,8 @@ public class Dish {
 
     @ManyToOne
     private CompanyRepresentative companyRep;
+    public Dish() {}
+
 
     public Long getId() {
         return id;

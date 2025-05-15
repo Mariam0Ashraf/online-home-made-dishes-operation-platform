@@ -1,8 +1,10 @@
 package com.example.javaeeproject;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 @Entity
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CompanyRepresentative {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

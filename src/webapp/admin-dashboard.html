@@ -124,11 +124,8 @@
       <tr style="background-color: #4caf50; color: white;">
         <th style="padding: 10px; border: 1px solid #ccc;">ID</th>
         <th style="padding: 10px; border: 1px solid #ccc;">Username</th>
-        <th style="padding: 10px; border: 1px solid #ccc;">Email</th>
         <th style="padding: 10px; border: 1px solid #ccc;">Password</th>
         <th style="padding: 10px; border: 1px solid #ccc;">Company</th>
-        <th style="padding: 10px; border: 1px solid #ccc;">Registration Date</th>
-        <th style="padding: 10px; border: 1px solid #ccc;">Balance</th>
       </tr>
     </thead>
     <tbody>`;
@@ -136,14 +133,12 @@
   data.forEach(rep => {
     const date = new Date(rep.registrationDate).toLocaleString();
     table += `<tr>
-      <td style="padding: 10px; border: 1px solid #ccc;">${rep.id}</td>
-      <td style="padding: 10px; border: 1px solid #ccc;">${rep.username}</td>
-      <td style="padding: 10px; border: 1px solid #ccc;">${rep.email}</td>
-      <td style="padding: 10px; border: 1px solid #ccc;">${rep.password}</td>
-      <td style="padding: 10px; border: 1px solid #ccc;">${rep.companyName || 'N/A'}</td>
-      <td style="padding: 10px; border: 1px solid #ccc;">${date}</td>
-      <td style="padding: 10px; border: 1px solid #ccc;">${rep.balance}</td>
-    </tr>`;
+  <td style="padding: 10px; border: 1px solid #ccc;">${rep.id}</td>
+  <td style="padding: 10px; border: 1px solid #ccc;">${rep.companyName}</td>
+  <td style="padding: 10px; border: 1px solid #ccc;">${rep.password}</td>
+  <td style="padding: 10px; border: 1px solid #ccc;">${rep.companyName}</td>
+</tr>`;
+
   });
 
   table += `</tbody></table>`;
