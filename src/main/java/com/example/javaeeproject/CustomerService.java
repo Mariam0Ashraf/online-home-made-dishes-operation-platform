@@ -6,6 +6,7 @@ import com.rabbitmq.client.Connection;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import java.util.List;
 
 @Stateless
 public class CustomerService {
-    @Inject
+    @PersistenceContext
     private EntityManager em;
 
     @Inject

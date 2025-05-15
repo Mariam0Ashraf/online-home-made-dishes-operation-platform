@@ -3,12 +3,13 @@ package com.example.javaeeproject;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import java.util.List;
 
 @Stateless
 public class CompanyRepresentativeService {
-    @Inject
+    @PersistenceContext
     private EntityManager em;
 
     public CompanyRepresentative login(String companyName, String password) {
