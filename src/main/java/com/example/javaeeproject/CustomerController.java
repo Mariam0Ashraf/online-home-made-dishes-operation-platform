@@ -29,7 +29,6 @@ public class CustomerController {
         Customer customer = service.login(creds.get("email"), creds.get("password"));
         return Response.ok(customer).build();
     }
-
     @GET
     @Path("/orders/{customerId}")
     public Response getOrders(@PathParam("customerId") Long customerId) {
