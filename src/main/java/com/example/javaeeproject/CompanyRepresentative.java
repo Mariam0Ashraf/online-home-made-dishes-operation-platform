@@ -13,6 +13,7 @@ public class CompanyRepresentative {
 
     private String password;
     private String email;
+    public CompanyRepresentative() {}
 
     @ManyToOne
     private Admin createdByAdmin;

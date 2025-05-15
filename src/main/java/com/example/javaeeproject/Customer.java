@@ -16,6 +16,7 @@ public class Customer {
     private String password;
     private Date registrationDate;
     private double balance;
+    public Customer() {}
     public Long getId() {
         return id;
     }

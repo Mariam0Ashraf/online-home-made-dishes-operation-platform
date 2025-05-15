@@ -72,16 +72,84 @@
 
 <script>
     async function getCustomers() {
-      const res = await fetch('/api/admin/customers');
-      const data = await res.json();
-      document.getElementById('output').innerText = JSON.stringify(data, null, 2);
-    }
+  const res = await fetch('http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/admin/customers');
+  const data = await res.json();
 
-    async function getReps() {
-      const res = await fetch('/api/admin/reps');
-      const data = await res.json();
-      document.getElementById('output').innerText = JSON.stringify(data, null, 2);
-    }
+  if (!Array.isArray(data) || data.length === 0) {
+    document.getElementById('output').innerHTML = "<p>No customers found.</p>";
+    return;
+  }
+
+  let table = `<table style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr style="background-color: #2196f3; color: white;">
+        <th style="padding: 10px; border: 1px solid #ccc;">ID</th>
+        <th style="padding: 10px; border: 1px solid #ccc;">Username</th>
+        <th style="padding: 10px; border: 1px solid #ccc;">Email</th>
+        <th style="padding: 10px; border: 1px solid #ccc;">Password</th>
+        <th style="padding: 10px; border: 1px solid #ccc;">Registration Date</th>
+        <th style="padding: 10px; border: 1px solid #ccc;">Balance</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  data.forEach(c => {
+    const date = new Date(c.registrationDate).toLocaleString();
+    table += `<tr>
+      <td style="padding: 10px; border: 1px solid #ccc;">${c.id}</td>
+      <td style="padding: 10px; border: 1px solid #ccc;">${c.username}</td>
+      <td style="padding: 10px; border: 1px solid #ccc;">${c.email}</td>
+      <td style="padding: 10px; border: 1px solid #ccc;">${c.password}</td>
+      <td style="padding: 10px; border: 1px solid #ccc;">${date}</td>
+      <td style="padding: 10px; border: 1px solid #ccc;">${c.balance}</td>
+    </tr>`;
+  });
+
+  table += `</tbody></table>`;
+  document.getElementById('output').innerHTML = table;
+}
+
+
+   async function getReps() {
+  const res = await fetch('http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/admin/reps');
+  const data = await res.json();
+
+  if (!Array.isArray(data) || data.length === 0) {
+    document.getElementById('output').innerHTML = "<p>No representatives found.</p>";
+    return;
+  }
+
+  let table = `<table style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr style="background-color: #4caf50; color: white;">
+        <th style="padding: 10px; border: 1px solid #ccc;">ID</th>
+        <th style="padding: 10px; border: 1px solid #ccc;">Username</th>
+        <th style="padding: 10px; border: 1px solid #ccc;">Email</th>
+        <th style="padding: 10px; border: 1px solid #ccc;">Password</th>
+        <th style="padding: 10px; border: 1px solid #ccc;">Company</th>
+        <th style="padding: 10px; border: 1px solid #ccc;">Registration Date</th>
+        <th style="padding: 10px; border: 1px solid #ccc;">Balance</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  data.forEach(rep => {
+    const date = new Date(rep.registrationDate).toLocaleString();
+    table += `<tr>
+      <td style="padding: 10px; border: 1px solid #ccc;">${rep.id}</td>
+      <td style="padding: 10px; border: 1px solid #ccc;">${rep.username}</td>
+      <td style="padding: 10px; border: 1px solid #ccc;">${rep.email}</td>
+      <td style="padding: 10px; border: 1px solid #ccc;">${rep.password}</td>
+      <td style="padding: 10px; border: 1px solid #ccc;">${rep.companyName || 'N/A'}</td>
+      <td style="padding: 10px; border: 1px solid #ccc;">${date}</td>
+      <td style="padding: 10px; border: 1px solid #ccc;">${rep.balance}</td>
+    </tr>`;
+  });
+
+  table += `</tbody></table>`;
+  document.getElementById('output').innerHTML = table;
+}
+
 
     const form = document.getElementById('createRepsForm');
     const resultDiv = document.getElementById('createRepsResult');
@@ -96,7 +164,7 @@
       const companies = input.split(',').map(name => name.trim()).filter(name => name.length > 0);
 
       try {
-        const res = await fetch('/api/admin/create-reps', {
+        const res = await fetch('http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/admin/create-reps', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(companies)

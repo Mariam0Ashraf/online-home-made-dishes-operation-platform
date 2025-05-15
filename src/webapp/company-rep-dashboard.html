@@ -82,13 +82,13 @@
     document.getElementById("repId").value = repId;
 
     async function fetchCurrentDishes() {
-      const res = await fetch(`/api/rep/dishes/${repId}`);
+      const res = await fetch(`http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/dishes/${repId}`);
       const data = await res.json();
       document.getElementById("output").innerText = JSON.stringify(data, null, 2);
     }
 
     async function fetchSales() {
-      const res = await fetch(`/api/rep/sales/${repId}`);
+      const res = await fetch(`http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/sales/${repId}`);
       const data = await res.json();
       document.getElementById("output").innerText = JSON.stringify(data, null, 2);
     }
@@ -104,7 +104,7 @@
         companyRep: { id: parseInt(repId) }
       };
 
-      const res = await fetch("/api/rep/dishes", {
+      const res = await fetch("http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/dishes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
@@ -126,7 +126,7 @@
         companyRep: { id: parseInt(repId) }
       };
 
-      const res = await fetch("/api/rep/dishes", {
+      const res = await fetch("http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/dishes", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
