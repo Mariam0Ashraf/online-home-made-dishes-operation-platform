@@ -7,6 +7,7 @@ import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -15,6 +16,9 @@ import java.util.List;
 public class CustomerService {
     @Inject
     private EntityManager em;
+
+    @Inject
+    private PaymentService paymentService;
 
     public void register(Customer customer) {
         customer.setRegistrationDate(new Date());
@@ -35,18 +39,56 @@ public class CustomerService {
     }
 
     public Order placeOrder(Long customerId, List<OrderItem> items) {
+        Customer customer = em.find(Customer.class, customerId);
         Order order = new Order();
-        order.setCustomer(em.find(Customer.class, customerId));
+        order.setCustomer(customer);
         order.setOrderDate(new Date());
         order.setStatus("PENDING");
         order.setItems(new ArrayList<>());
 
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        BigDecimal minimumCharge = new BigDecimal("5.00");
+
         for (OrderItem item : items) {
+            Dish dish = em.find(Dish.class, item.getDish().getId());
+            if (dish == null || dish.getAvailableQuantity() < item.getQuantity()) {
+                order.setStatus("CANCELLED");
+                em.persist(order);
+                throw new IllegalArgumentException("Insufficient stock for dish: " + (dish != null ? dish.getName() : ""));
+            }
+            totalAmount = totalAmount.add(BigDecimal.valueOf(dish.getPrice()).multiply(BigDecimal.valueOf(item.getQuantity())));
+        }
+
+        if (totalAmount.compareTo(minimumCharge) < 0) {
+            order.setStatus("CANCELLED");
+            em.persist(order);
+            throw new IllegalArgumentException("Order total must be at least $" + minimumCharge);
+        }
+
+        if (!paymentService.processPayment(totalAmount)) {
+            order.setStatus("CANCELLED");
+            em.persist(order);
+            throw new RuntimeException("Payment failed");
+        }
+
+        for (OrderItem item : items) {
+            Dish dish = em.find(Dish.class, item.getDish().getId());
+            dish.setAvailableQuantity(dish.getAvailableQuantity() - item.getQuantity());
+            em.merge(dish);
+
             item.setOrder(order);
-            item.setPriceAtPurchase(item.getDish().getPrice());
+            item.setPriceAtPurchase(dish.getPrice());
             order.getItems().add(item);
         }
+
+        if (!items.isEmpty()) {
+            Dish firstDish = items.get(0).getDish();
+            order.setShippingCompanyName(firstDish.getCompanyRep().getCompanyName());
+        }
+
+        order.setStatus("CONFIRMED");
         em.persist(order);
+
         try {
             ObjectMapper mapper = new ObjectMapper();
             String orderJson = mapper.writeValueAsString(order);
@@ -62,6 +104,7 @@ public class CustomerService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return order;
     }
 

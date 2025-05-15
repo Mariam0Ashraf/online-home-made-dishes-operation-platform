@@ -16,7 +16,6 @@ public class CustomerController {
     @Inject
     private CustomerService service;
 
-    @POST
     @Path("/register")
     public Response register(Customer customer) {
         service.register(customer);
