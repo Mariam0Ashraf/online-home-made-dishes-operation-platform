@@ -1,8 +1,8 @@
 package com.example.javaeeproject;
 
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.ws.rs.*;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -19,8 +19,8 @@ public class AdminController {
     @POST
     @Path("/login")
     public Response login(Admin admin) {
-        Admin loggedIn = service.login(admin.getUsername(), admin.getPassword());
-        if (loggedIn != null) {
+        boolean success = service.login(admin.getUsername(), admin.getPassword());
+        if (success) {
             return Response.ok("Login successful").build();
         } else {
             return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
@@ -34,10 +34,12 @@ public class AdminController {
         return Response.ok("Admins initialized").build();
     }
 
-
     @POST
     @Path("/create-reps")
     public Response createReps(List<String> companyNames) {
+        if (!service.isLoggedIn()) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("You must log in first").build();
+        }
         List<CompanyRepresentative> reps = service.createCompanyRepresentatives(companyNames);
         return Response.ok(reps).build();
     }
@@ -45,12 +47,18 @@ public class AdminController {
     @GET
     @Path("/customers")
     public Response getCustomers() {
+        if (!service.isLoggedIn()) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("You must log in first").build();
+        }
         return Response.ok(service.listAllCustomers()).build();
     }
 
     @GET
     @Path("/reps")
     public Response getReps() {
+        if (!service.isLoggedIn()) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("You must log in first").build();
+        }
         return Response.ok(service.listAllCompanyRepresentatives()).build();
     }
 }

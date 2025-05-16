@@ -7,10 +7,13 @@ import jakarta.persistence.PersistenceContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
 @Stateless
 public class AdminService {
     @PersistenceContext
     private EntityManager em;
+
+    private static boolean isAdminLoggedIn = false;
 
     public List<CompanyRepresentative> createCompanyRepresentatives(List<String> companyNames) {
         List<CompanyRepresentative> reps = new ArrayList<>();
@@ -34,13 +37,21 @@ public class AdminService {
         return em.createQuery("SELECT cr FROM CompanyRepresentative cr", CompanyRepresentative.class).getResultList();
     }
 
-    public Admin login(String username, String password) {
+    public boolean login(String username, String password) {
         List<Admin> admins = em.createQuery(
                         "SELECT a FROM Admin a WHERE a.username = :username AND a.password = :password", Admin.class)
                 .setParameter("username", username)
                 .setParameter("password", password)
                 .getResultList();
-        return admins.isEmpty() ? null : admins.get(0);
+        if (!admins.isEmpty()) {
+            isAdminLoggedIn = true;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isLoggedIn() {
+        return isAdminLoggedIn;
     }
 
     public void initializeAdmins() {
