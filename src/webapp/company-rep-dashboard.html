@@ -31,14 +31,34 @@
           border-radius: 4px;
           border: 1px solid #ccc;
         }
-        #output {
-          white-space: pre-wrap;
-          background: #fff;
-          padding: 15px;
-          margin-top: 20px;
-          border-radius: 5px;
-          box-shadow: 0 0 5px rgba(0,0,0,0.1);
-        }
+        #outputContainer {
+    margin-top: 30px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  th, td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+  }
+
+  th {
+    background-color: #28a745;
+    color: white;
+  }
+
+  tr:hover {
+    background-color: #f1f1f1;
+    }
         form {
           background: #fff;
           padding: 20px;
@@ -56,7 +76,10 @@
 <button onclick="fetchCurrentDishes()">View Current Dishes</button>
 <button onclick="fetchSales()">View Sold Dishes</button>
 
-<div id="output"></div>
+<div id="outputContainer">
+    <h2>Current Dishes</h2>
+    <div id="output"></div>
+</div>
 
 <h2>Add New Dish</h2>
 <form id="addDishForm">
@@ -83,18 +106,47 @@
     } else {
       document.getElementById("repId").value = repId;
     }
+function renderTable(data) {
+  if (!Array.isArray(data) || data.length === 0) {
+    document.getElementById("output").innerHTML = "<p>No data found.</p>";
+    return;
+  }
 
-    async function fetchCurrentDishes() {
-      const res = await fetch(`http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/dishes/${repId}`);
-      const data = await res.json();
-      document.getElementById("output").innerText = JSON.stringify(data, null, 2);
-    }
+  // Filter out 'companyRep' from headers
+  const headers = Object.keys(data[0]).filter(key => key !== "companyRep");
 
-    async function fetchSales() {
-      const res = await fetch(`http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/sales/${repId}`);
-      const data = await res.json();
-      document.getElementById("output").innerText = JSON.stringify(data, null, 2);
-    }
+  let html = "<table><thead><tr>";
+  headers.forEach(key => {
+    html += `<th>${key.replace(/([A-Z])/g, ' $1')}</th>`;
+  });
+  html += "</tr></thead><tbody>";
+
+  data.forEach(item => {
+    html += "<tr>";
+    headers.forEach(key => {
+      html += `<td>${item[key]}</td>`;
+    });
+    html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+
+  document.getElementById("output").innerHTML = html;
+}
+
+
+async function fetchCurrentDishes() {
+  const res = await fetch(`http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/dishes/${repId}`);
+  const data = await res.json();
+  renderTable(data);
+}
+
+async function fetchSales() {
+  const res = await fetch(`http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/sales/${repId}`);
+  const data = await res.json();
+  renderTable(data, true);
+}
+
 
     document.getElementById("addDishForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -102,7 +154,6 @@
         name: document.getElementById("dishName").value,
         price: parseFloat(document.getElementById("dishPrice").value),
         availableQuantity: parseInt(document.getElementById("dishQuantity").value),
-        isActive: true,
         companyRep: { id: parseInt(repId) }
       };console.log(JSON.stringify(body));
 
@@ -124,7 +175,6 @@
         name: document.getElementById("updateDishName").value,
         price: parseFloat(document.getElementById("updateDishPrice").value),
         availableQuantity: parseInt(document.getElementById("updateDishQuantity").value),
-        isActive: true,
         companyRep: { id: parseInt(repId) }
       };
 
