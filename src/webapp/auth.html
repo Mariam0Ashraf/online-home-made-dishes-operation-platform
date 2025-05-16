@@ -170,21 +170,27 @@
     }
 
     async function loginRep() {
-      const creds = {
-        companyName: document.getElementById("rep-company").value,
-        password: document.getElementById("rep-password").value
-      };
+  const creds = {
+    companyName: document.getElementById("rep-company").value,
+    password: document.getElementById("rep-password").value
+  };
 
-      const res = await fetch("http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(creds)
-      });
+  const res = await fetch("http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(creds)
+  });
 
-      const data = await res.json();
-      alert("Rep Login Successful: " + data.companyName);
-      window.location.href = "company-rep-dashboard.html";
-    }
+  if (res.ok) {
+    const rep = await res.json();
+    sessionStorage.setItem("repId", rep.id);
+    sessionStorage.setItem("companyName", rep.companyName);
+    window.location.href = "company-rep-dashboard.html";
+  } else {
+    alert("Login failed");
+  }
+}
+
 
     function loginAdmin() {
       const user = document.getElementById("admin-user").value;
