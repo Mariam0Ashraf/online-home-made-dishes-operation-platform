@@ -17,6 +17,7 @@ import java.util.List;
 public class CustomerService {
     @PersistenceContext
     private EntityManager em;
+    private static Customer loggedInCustomer = null;
 
     @Inject
     private PaymentService paymentService;
@@ -27,10 +28,21 @@ public class CustomerService {
     }
 
     public Customer login(String email, String password) {
-        return em.createQuery("SELECT c FROM Customer c WHERE c.email = :email AND c.password = :pwd", Customer.class)
+        Customer customer = em.createQuery(
+                        "SELECT c FROM Customer c WHERE c.email = :email AND c.password = :pwd", Customer.class)
                 .setParameter("email", email)
                 .setParameter("pwd", password)
                 .getSingleResult();
+        loggedInCustomer = customer;
+        return customer;
+    }
+
+    public boolean isLoggedIn() {
+        return loggedInCustomer != null;
+    }
+
+    public Long getLoggedInCustomerId() {
+        return loggedInCustomer != null ? loggedInCustomer.getId() : null;
     }
 
     public List<Order> getCurrentAndPastOrders(Long customerId) {
@@ -66,7 +78,6 @@ public class CustomerService {
             throw new IllegalArgumentException("Order total must be at least $" + minimumCharge);
         }
 
-        // Fixed: Pass order instead of totalAmount
         if (!paymentService.processPayment(order)) {
             order.setStatus("CANCELLED");
             em.persist(order);

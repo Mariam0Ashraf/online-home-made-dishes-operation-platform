@@ -26,21 +26,33 @@ public class CustomerController {
     @POST
     @Path("/login")
     public Response login(Map<String, String> creds) {
-        Customer customer = service.login(creds.get("email"), creds.get("password"));
-        return Response.ok(customer).build();
+        try {
+            Customer customer = service.login(creds.get("email"), creds.get("password"));
+            return Response.ok(customer).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity("Invalid email or password").build();
+        }
     }
+
     @GET
     @Path("/orders/{customerId}")
     public Response getOrders(@PathParam("customerId") Long customerId) {
+        if (!service.isLoggedIn() || !customerId.equals(service.getLoggedInCustomerId())) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity("You must be logged in as this customer").build();
+        }
         return Response.ok(service.getCurrentAndPastOrders(customerId)).build();
     }
 
     @POST
     @Path("/order/{customerId}")
-    public Response placeOrder(
-            @PathParam("customerId") Long customerId,
-            List<OrderItem> items
-    ) {
+    public Response placeOrder(@PathParam("customerId") Long customerId, List<OrderItem> items) {
+        if (!service.isLoggedIn() || !customerId.equals(service.getLoggedInCustomerId())) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity("You must be logged in as this customer").build();
+        }
+
         try {
             Order order = service.placeOrder(customerId, items);
             return Response.ok(order).build();
