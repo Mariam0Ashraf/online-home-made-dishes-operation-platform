@@ -17,6 +17,25 @@ public class AdminController {
     private AdminService service;
 
     @POST
+    @Path("/login")
+    public Response login(Admin admin) {
+        Admin loggedIn = service.login(admin.getUsername(), admin.getPassword());
+        if (loggedIn != null) {
+            return Response.ok("Login successful").build();
+        } else {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+        }
+    }
+
+    @POST
+    @Path("/initialize")
+    public Response initializeAdmins() {
+        service.initializeAdmins();
+        return Response.ok("Admins initialized").build();
+    }
+
+
+    @POST
     @Path("/create-reps")
     public Response createReps(List<String> companyNames) {
         List<CompanyRepresentative> reps = service.createCompanyRepresentatives(companyNames);
