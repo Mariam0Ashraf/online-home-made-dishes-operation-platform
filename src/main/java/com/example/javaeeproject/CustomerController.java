@@ -61,4 +61,13 @@ public class CustomerController {
                     .entity(e.getMessage()).build();
         }
     }
+    @GET
+    @Path("/dishes")
+    public Response getAllDishes() {
+        if (!service.isLoggedIn()) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity("You must be logged in").build();
+        }
+        return Response.ok(service.getAllActiveDishes()).build();
+    }
 }

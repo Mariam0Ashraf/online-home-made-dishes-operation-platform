@@ -126,4 +126,9 @@ public class CustomerService {
         order.setStatus("CONFIRMED");
         em.merge(order);
     }
+
+    public List<Dish> getAllActiveDishes() {
+        return em.createQuery("SELECT d FROM Dish d WHERE d.isActive = true", Dish.class)
+                .getResultList();
+    }
 }
