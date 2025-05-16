@@ -6,6 +6,7 @@ import com.rabbitmq.client.Connection;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 
 import java.math.BigDecimal;
@@ -60,15 +61,28 @@ public class CustomerService {
         order.setItems(new ArrayList<>());
 
         BigDecimal totalAmount = BigDecimal.ZERO;
-        BigDecimal minimumCharge = new BigDecimal("5.00");
+        BigDecimal minimumCharge = new BigDecimal("0.00");
+
+        List<Dish> dishesWithCompanyRep = new ArrayList<>();
 
         for (OrderItem item : items) {
-            Dish dish = em.find(Dish.class, item.getDish().getId());
+            Dish dish;
+            try {
+                dish = em.createQuery(
+                                "SELECT d FROM Dish d LEFT JOIN FETCH d.companyRep WHERE d.id = :id", Dish.class)
+                        .setParameter("id", item.getDish().getId())
+                        .getSingleResult();
+            } catch (NoResultException e) {
+                throw new IllegalArgumentException("Dish with id " + item.getDish().getId() + " not found");
+            }
+
             if (dish == null || dish.getAvailableQuantity() < item.getQuantity()) {
                 order.setStatus("CANCELLED");
                 em.persist(order);
                 throw new IllegalArgumentException("Insufficient stock for dish: " + (dish != null ? dish.getName() : ""));
             }
+
+            dishesWithCompanyRep.add(dish);
             totalAmount = totalAmount.add(BigDecimal.valueOf(dish.getPrice()).multiply(BigDecimal.valueOf(item.getQuantity())));
         }
 
@@ -84,18 +98,21 @@ public class CustomerService {
             throw new RuntimeException("Payment failed");
         }
 
-        for (OrderItem item : items) {
-            Dish dish = em.find(Dish.class, item.getDish().getId());
+        for (int i = 0; i < items.size(); i++) {
+            OrderItem item = items.get(i);
+            Dish dish = dishesWithCompanyRep.get(i); // this version includes companyRep
+
             dish.setAvailableQuantity(dish.getAvailableQuantity() - item.getQuantity());
             em.merge(dish);
 
             item.setOrder(order);
+            item.setDish(dish); // ensure correct dish object
             item.setPriceAtPurchase(dish.getPrice());
             order.getItems().add(item);
         }
 
-        if (!items.isEmpty()) {
-            Dish firstDish = items.get(0).getDish();
+        if (!dishesWithCompanyRep.isEmpty()) {
+            Dish firstDish = dishesWithCompanyRep.get(0);
             order.setShippingCompanyName(firstDish.getCompanyRep().getCompanyName());
         }
 
@@ -120,6 +137,7 @@ public class CustomerService {
 
         return order;
     }
+
 
     public void confirmOrder(Long orderId) {
         Order order = em.find(Order.class, orderId);
