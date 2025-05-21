@@ -24,6 +24,11 @@ public class CustomerService {
     private PaymentService paymentService;
 
     public void register(Customer customer) {
+        if (customer.getBalance() < 0) {
+            throw new IllegalArgumentException("Balance cannot be negative");
+        }
+        customer.setRegistrationDate(new Date());
+        em.persist(customer);
         customer.setRegistrationDate(new Date());
         em.persist(customer);
     }
