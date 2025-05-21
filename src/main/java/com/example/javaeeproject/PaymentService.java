@@ -2,11 +2,11 @@ package com.example.javaeeproject;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
-import jakarta.annotation.PostConstruct;
 import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -14,55 +14,50 @@ import java.nio.charset.StandardCharsets;
 @Singleton
 @Startup
 public class PaymentService {
-    private static final String INVENTORY_QUEUE = "inventory_queue";
-    private static final String LOG_EXCHANGE = "log_exchange";
-    private static final String NOTIFICATIONS_EXCHANGE = "notifications_exchange";
 
     @PersistenceContext
     private EntityManager em;
 
-    @PostConstruct
-    public void init() {
-        new Thread(() -> {
-            try {
-                start();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
+    private static final double MINIMUM_CHARGE = 5.0;
 
     public void start() throws Exception {
-        Connection connection = RabbitMQService.getConnection();
-        Channel channel = connection.createChannel();
-        channel.queueDeclare(INVENTORY_QUEUE, false, false, false, null);
+        Connection conn = RabbitMQService.getConnection();
+        Channel channel = conn.createChannel();
 
-        System.out.println(" [*] PaymentService waiting for inventory confirmation...");
+        channel.exchangeDeclare("payment_exchange", "direct", true);
+        String queueName = channel.queueDeclare().getQueue();
+        channel.queueBind(queueName, "payment_exchange", "ProcessPayment");
+
         DeliverCallback callback = (consumerTag, delivery) -> {
-            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-            System.out.println(" [x] Received stock-confirmed order: " + message);
+            String msg = new String(delivery.getBody(), StandardCharsets.UTF_8);
+            Order order = new ObjectMapper().readValue(msg, Order.class);
 
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                Order order = mapper.readValue(message, Order.class);
+            double total = order.getItems().stream()
+                    .mapToDouble(i -> i.getQuantity() * i.getPriceAtPurchase())
+                    .sum();
 
-                boolean paymentSuccess = processPayment(order);
+            if (total < MINIMUM_CHARGE) {
+                cancelOrderAndRollbackStock(order, channel);
+                log(channel, "Payments_Error", "Order " + order.getId() + " failed: below minimum charge");
+                return;
+            }
 
-                if (paymentSuccess) {
-                    log(channel, "Payments_Info", "Payment processed for Order #" + order.getId());
-                } else {
-                    log(channel, "Payments_Error", "Payment failed for Order #" + order.getId());
-                    channel.basicPublish(NOTIFICATIONS_EXCHANGE, "PaymentFailed", null, message.getBytes());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                log(channel, "Payments_Error", "Exception while processing payment.");
+            boolean paymentSuccess = processPayment(order);
+            if (paymentSuccess) {
+                updateOrderStatus(order.getId(), "CONFIRMED");
+                publishPaymentEvent(order, "OrderConfirmed");
+                log(channel, "Payments_Info", "Payment successful for Order " + order.getId());
+            } else {
+                cancelOrderAndRollbackStock(order, channel);
+                publishPaymentEvent(order, "PaymentFailed");
+                log(channel, "Payments_Error", "Payment failed for Order " + order.getId());
             }
         };
-        channel.basicConsume(INVENTORY_QUEUE, true, callback, tag -> {});
+        channel.basicConsume(queueName, true, callback, consumerTag -> {});
     }
 
-    public boolean processPayment(Order order) { // Changed to public
+    @Transactional
+    private boolean processPayment(Order order) {
         Customer customer = em.find(Customer.class, order.getCustomer().getId());
         double total = order.getItems().stream()
                 .mapToDouble(i -> i.getQuantity() * i.getPriceAtPurchase())
@@ -72,13 +67,41 @@ public class PaymentService {
             customer.setBalance(customer.getBalance() - total);
             em.merge(customer);
             return true;
-        } else {
-            return false;
+        }
+        return false;
+    }
+
+    @Transactional
+    private void cancelOrderAndRollbackStock(Order order, Channel channel) throws IOException {
+        updateOrderStatus(order.getId(), "CANCELLED");
+
+        for (OrderItem item : order.getItems()) {
+            Dish dish = em.find(Dish.class, item.getDish().getId());
+            dish.setAvailableQuantity(dish.getAvailableQuantity() + item.getQuantity());
+            em.merge(dish);
+        }
+        log(channel, "Payments_Error", "Stock rolled back for Order " + order.getId());
+    }
+
+    private void updateOrderStatus(Long orderId, String status) {
+        Order order = em.find(Order.class, orderId);
+        order.setStatus(status);
+        em.merge(order);
+    }
+
+    private void publishPaymentEvent(Order order, String routingKey) {
+        try (Connection conn = RabbitMQService.getConnection();
+             Channel channel = conn.createChannel()) {
+            channel.exchangeDeclare("payment_exchange", "direct", true);
+            String json = new ObjectMapper().writeValueAsString(order);
+            channel.basicPublish("payment_exchange", routingKey, null, json.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     private void log(Channel channel, String severity, String message) throws IOException {
-        channel.exchangeDeclare(LOG_EXCHANGE, BuiltinExchangeType.TOPIC, true);
-        channel.basicPublish(LOG_EXCHANGE, severity, null, message.getBytes(StandardCharsets.UTF_8));
+        channel.exchangeDeclare("log_exchange", BuiltinExchangeType.TOPIC, true);
+        channel.basicPublish("log_exchange", severity, null, message.getBytes(StandardCharsets.UTF_8));
     }
 }

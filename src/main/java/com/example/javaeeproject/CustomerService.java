@@ -1,6 +1,7 @@
 package com.example.javaeeproject;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import jakarta.ejb.Stateless;
@@ -9,7 +10,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -68,24 +71,16 @@ public class CustomerService {
         }
 
         Order order = new Order();
-        Customer customer = em.find(Customer.class, customerId);
-        order.setCustomer(customer);
+        order.setCustomer(em.find(Customer.class, customerId));
         order.setOrderDate(new Date());
-        order.setStatus("PLACED");
+        order.setStatus("CREATED"); // new status
         order.setItems(new ArrayList<>());
-        em.persist(order);
 
         for (OrderItemDTO dto : itemsDto) {
             Dish dish = em.find(Dish.class, dto.getDishId());
             if (dish == null || !dish.isActive()) {
                 throw new IllegalArgumentException("Dish with id " + dto.getDishId() + " not found");
             }
-            if (dish.getAvailableQuantity() < dto.getQuantity()) {
-                throw new IllegalArgumentException("Not enough quantity for dish " + dish.getName());
-            }
-
-            dish.setAvailableQuantity(dish.getAvailableQuantity() - dto.getQuantity());
-            em.merge(dish);
 
             OrderItem item = new OrderItem();
             item.setDish(dish);
@@ -93,28 +88,35 @@ public class CustomerService {
             item.setPriceAtPurchase(dish.getPrice());
             item.setOrder(order);
             em.persist(item);
-
             order.getItems().add(item);
         }
 
-        em.merge(order);
-        try {
+        em.persist(order);
+        publishOrderEvent(order, "OrderCreated");
+
+        return new OrderDTO(order);
+    }
+
+    private void publishOrderEvent(Order order, String routingKey) {
+        try (Connection conn = RabbitMQService.getConnection();
+             Channel channel = conn.createChannel()) {
+            channel.exchangeDeclare("order_exchange", "direct", true);
+
             ObjectMapper mapper = new ObjectMapper();
-            String orderJson = mapper.writeValueAsString(order);
-            try (Connection conn = RabbitMQService.getConnection();
-                 Channel channel = conn.createChannel()) {
+            String json = mapper.writeValueAsString(order);
+            channel.basicPublish("order_exchange", routingKey, null, json.getBytes(StandardCharsets.UTF_8));
 
-                channel.exchangeDeclare("order_exchange", "direct", true);
-                channel.basicPublish("order_exchange", "OrderPlaced", null, orderJson.getBytes());
-
-                System.out.println("Order published to RabbitMQ: " + order.getId());
-            }
-
+            log(channel, "OrderService_Info", routingKey + " event published for Order " + order.getId());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new OrderDTO(order);
     }
+
+    private void log(Channel channel, String severity, String message) throws IOException {
+        channel.exchangeDeclare("log_exchange", BuiltinExchangeType.TOPIC, true);
+        channel.basicPublish("log_exchange", severity, null, message.getBytes(StandardCharsets.UTF_8));
+    }
+
 
     public void confirmOrder(Long orderId) {
         Order order = em.find(Order.class, orderId);
