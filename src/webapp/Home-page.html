@@ -149,7 +149,7 @@
  }
 
 
-      async function placeOrder(e) {
+     async function placeOrder(e) {
   e.preventDefault();
 
   const customerId = localStorage.getItem("customerId");
@@ -171,17 +171,22 @@
     if (quantity < 1) {
       throw new Error("Quantity must be at least 1");
     }
+
     return {
-      dish: { id: dishId },
+      dishId: dishId,
       quantity: quantity
     };
   });
+
+  const orderPayload = {
+    items: items
+  };
 
   try {
     const res = await fetch(`http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/customer/order/${customerId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(items)
+      body: JSON.stringify(orderPayload)
     });
 
     if (res.ok) {

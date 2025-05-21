@@ -15,11 +15,8 @@ public class OrderItem {
     @ManyToOne
   //  @JsonIgnoreProperties({"companyRep", "orderItems"})
     private Dish dish;
-
-
     @ManyToOne
     private Order order;
-
     private int quantity;
     private double priceAtPurchase;
 
