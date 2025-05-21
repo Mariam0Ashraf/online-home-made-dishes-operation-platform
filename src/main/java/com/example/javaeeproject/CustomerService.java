@@ -98,6 +98,21 @@ public class CustomerService {
         }
 
         em.merge(order);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String orderJson = mapper.writeValueAsString(order);
+            try (Connection conn = RabbitMQService.getConnection();
+                 Channel channel = conn.createChannel()) {
+
+                channel.exchangeDeclare("order_exchange", "direct", true);
+                channel.basicPublish("order_exchange", "OrderPlaced", null, orderJson.getBytes());
+
+                System.out.println("Order published to RabbitMQ: " + order.getId());
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return new OrderDTO(order);
     }
 
