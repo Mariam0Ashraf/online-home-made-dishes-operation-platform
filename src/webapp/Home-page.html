@@ -66,98 +66,97 @@
 </section>
 
 <script>
-    const customerId = localStorage.getItem("customerId");
+    async function fetchOrders() {
+  const customerId = localStorage.getItem("customerId");
 
-        async function fetchOrders() {
-          try {
-          if (!customerId) {
-  alert("Please login first.");
-  window.location.href = "login.html"; // or wherever your login page is
-  return;
-}
-            const res = await fetch(`http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/customer/orders/${customerId}`);
-            const orders = await res.json();
-
-            const container = document.getElementById("ordersContainer");
-            container.innerHTML = "";
-
-            if (orders.length === 0) {
-              container.innerHTML = "<p>No orders found.</p>";
-              return;
-            }
-
-            orders.forEach(order => {
-              const div = document.createElement("div");
-              div.className = "order";
-              div.innerHTML = `
-                <p><strong>Order ID:</strong> ${order.id}</p>
-                <p><strong>Status:</strong> ${order.status}</p>
-                <p><strong>Date:</strong> ${new Date(order.orderDate).toLocaleString()}</p>
-                <div>
-                  <strong>Items:</strong>
-                  <ul>
-                    ${order.items.map(item => `
-                      <li class="order-item">
-                        ${item.dish.name} - ${item.quantity} pcs - $${item.priceAtPurchase}
-                      </li>`).join("")}
-                  </ul>
-                </div>
-                ${order.status === 'PENDING' ? `<button onclick="confirmOrder(${order.id})">Confirm Order</button>` : ''}
-              `;
-              container.appendChild(div);
-            });
-
-          } catch (error) {
-            console.error("Error fetching orders:", error);
-            document.getElementById("ordersContainer").innerHTML = "<p>Failed to load orders.</p>";
-          }
-        }
-
-     async function fetchDishes() {
   try {
-    const res = await fetch('http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/customer/dishes', {
-  credentials: 'include'
-});
+    const res = await fetch(`http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/customer/orders/${customerId}`);
+    if (!res.ok) throw new Error("Failed to fetch orders");
+    const orders = await res.json();
 
-    if (!res.ok) throw new Error("Failed to load dishes");
-    const dishes = await res.json();
+     const container = document.getElementById("ordersContainer");
+     container.innerHTML = "";
 
-    const list = document.getElementById("dishList");
-    list.innerHTML = "";
+     if (orders.length === 0) {
+       container.innerHTML = "<p>No orders found.</p>";
+       return;
+     }
 
-    if (dishes.length === 0) {
-      list.innerHTML = "<p>No dishes available.</p>";
-      return;
-    }
+     orders.forEach(order => {
+       const div = document.createElement("div");
+       div.className = "order";
+       div.innerHTML = `
+         <p><strong>Order ID:</strong> ${order.id}</p>
+         <p><strong>Status:</strong> ${order.status}</p>
+         <p><strong>Date:</strong> ${new Date(order.orderDate).toLocaleString()}</p>
+         <div>
+           <strong>Items:</strong>
+           <ul>
+             ${order.items.map(item => `
+               <li class="order-item">
+                 ${item.dish.name} - ${item.quantity} pcs - $${item.priceAtPurchase}
+               </li>`).join("")}
+           </ul>
+         </div>
+         ${order.status === 'PENDING' ? `<button onclick="confirmOrder(${order.id})">Confirm Order</button>` : ''}
+       `;
+       container.appendChild(div);
+     });
 
-    dishes.forEach(dish => {
-      const isAvailable = dish.availableQuantity > 0;
-      const div = document.createElement("div");
-      div.className = "dish";
-      div.innerHTML = `
-        <label>
-          <input type="checkbox" name="dish" value="${dish.id}" data-name="${dish.name}" data-price="${dish.price}" ${!isAvailable ? 'disabled' : ''}>
-          <strong>${dish.name}</strong> ($${dish.price.toFixed(2)})<br>
-          <small>Company: ${dish.companyRep?.companyName || 'Unknown'}</small><br>
-          <input type="number" name="quantity-${dish.id}" min="1" max="${dish.availableQuantity}" value="1" ${!isAvailable ? 'disabled' : ''}>
-          ${!isAvailable ? '<span style="color: red; margin-left: 10px;">Out of stock</span>' : ''}
-        </label>
-      `;
-      list.appendChild(div);
-    });
-  } catch (error) {
-    console.error("Failed to load dishes", error);
-    document.getElementById("dishList").innerHTML = "<p>Could not load dishes.</p>";
+   } catch (error) {
+    console.error("Error fetching orders:", error);
+    document.getElementById("ordersContainer").innerHTML = "<p>Failed to load orders.</p>";
   }
 }
 
 
-       async function placeOrder(e) {
+      async function fetchDishes() {
+   try {
+     const res = await fetch('http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/customer/dishes', {
+   credentials: 'include'
+ });
+
+     if (!res.ok) throw new Error("Failed to load dishes");
+     const dishes = await res.json();
+
+     const list = document.getElementById("dishList");
+     list.innerHTML = "";
+
+     if (dishes.length === 0) {
+       list.innerHTML = "<p>No dishes available.</p>";
+       return;
+     }
+
+     dishes.forEach(dish => {
+       const isAvailable = dish.availableQuantity > 0;
+       const div = document.createElement("div");
+       div.className = "dish";
+       div.innerHTML = `
+         <label>
+           <input type="checkbox" name="dish" value="${dish.id}" data-name="${dish.name}" data-price="${dish.price}" ${!isAvailable ? 'disabled' : ''}>
+           <strong>${dish.name}</strong> ($${dish.price.toFixed(2)})<br>
+           <small>Company: ${dish.companyRep?.companyName || 'Unknown'}</small><br>
+           <input type="number" name="quantity-${dish.id}" min="1" max="${dish.availableQuantity}" value="1" ${!isAvailable ? 'disabled' : ''}>
+           ${!isAvailable ? '<span style="color: red; margin-left: 10px;">Out of stock</span>' : ''}
+         </label>
+       `;
+       list.appendChild(div);
+     });
+   } catch (error) {
+     console.error("Failed to load dishes", error);
+     document.getElementById("dishList").innerHTML = "<p>Could not load dishes.</p>";
+   }
+ }
+
+
+      async function placeOrder(e) {
+  e.preventDefault();
+
+  const customerId = localStorage.getItem("customerId");
   if (!customerId) {
     alert("Please login first.");
     return;
   }
-  e.preventDefault();
 
   const checkedBoxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="dish"]:checked'));
   if (checkedBoxes.length === 0) {
@@ -166,7 +165,7 @@
   }
 
   const items = checkedBoxes.map(box => {
-    const dishId = parseInt(box.value); // cast to int if backend expects it
+    const dishId = parseInt(box.value);
     const quantityInput = document.querySelector(`input[name="quantity-${dishId}"]`);
     const quantity = parseInt(quantityInput.value);
     if (quantity < 1) {
@@ -182,12 +181,12 @@
     const res = await fetch(`http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/customer/order/${customerId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-       body: JSON.stringify(items)
+      body: JSON.stringify(items)
     });
 
     if (res.ok) {
       alert("Order placed successfully!");
-      document.getElementById("orderForm").reset(); // Clear form
+      document.getElementById("orderForm").reset();
       fetchOrders();
     } else {
       const errorText = await res.text();
@@ -199,11 +198,9 @@
   }
 }
 
-
-        // Initialize
-        fetchOrders();
-        fetchDishes();
-        document.getElementById("orderForm").addEventListener("submit", placeOrder);
+         fetchOrders();
+         fetchDishes();
+         document.getElementById("orderForm").addEventListener("submit", placeOrder);
 </script>
 
 </body>

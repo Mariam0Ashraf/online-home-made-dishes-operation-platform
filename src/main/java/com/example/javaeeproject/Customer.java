@@ -15,6 +15,7 @@ public class Customer {
     private String email;
     private String password;
     private Date registrationDate;
+    @Column(nullable = false)
     private double balance;
     public Customer() {}
     public Long getId() {

@@ -4,14 +4,17 @@
     <meta charset="UTF-8" />
     <title>Admin Dashboard</title>
     <style>
+        /* Base Styles */
         body {
           font-family: Arial, sans-serif;
           background: #f0f2f5;
           padding: 40px;
         }
+
         h1 {
           color: #333;
         }
+
         button {
           padding: 10px 20px;
           margin: 10px 0;
@@ -21,25 +24,31 @@
           border-radius: 6px;
           cursor: pointer;
         }
+
         button:hover {
           background-color: #1976d2;
         }
+
+        /* Output Section */
         #output {
           margin-top: 20px;
           white-space: pre-wrap;
           background: #fff;
           padding: 15px;
           border-radius: 8px;
-          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
+        /* Form Styles */
         form {
           margin-top: 30px;
           background: #fff;
           padding: 20px;
           border-radius: 8px;
-          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
           max-width: 400px;
         }
+
         input[type="text"] {
           width: 95%;
           padding: 8px;
@@ -48,14 +57,50 @@
           border-radius: 4px;
           border: 1px solid #ccc;
         }
+
         #createRepsResult {
           margin-top: 10px;
           white-space: pre-wrap;
         }
+
+        /* Card Styles */
+        .card-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 15px;
+          margin-top: 20px;
+        }
+
+        .rep-card {
+          background: #ffffff;
+          padding: 15px 20px;
+          border-radius: 8px;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+          min-width: 200px;
+          border-left: 5px solid #2196f3;
+          transition: transform 0.2s ease;
+        }
+
+        .rep-card:hover {
+          transform: translateY(-3px);
+        }
+
+        .rep-card h3 {
+          margin: 0 0 10px 0;
+          color: #2196f3;
+        }
+
+        .rep-card p {
+          margin: 0;
+          font-size: 14px;
+          color: #444;
+        }
     </style>
 </head>
+
 <body>
 <h1>Welcome Admin!</h1>
+
 <button onclick="getCustomers()">View All Customers</button>
 <button onclick="getReps()">View All Representatives</button>
 
@@ -68,90 +113,94 @@
     <br /><br />
     <button type="submit">Create Representatives</button>
 </form>
+
 <div id="createRepsResult"></div>
 
 <script>
+    localStorage.getItem("isAdmin") === "true"
+    // Fetch and display all customers
     async function getCustomers() {
-  const res = await fetch('http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/admin/customers');
-  const data = await res.json();
+      const res = await fetch('http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/admin/customers');
+      const data = await res.json();
 
-  if (!Array.isArray(data) || data.length === 0) {
-    document.getElementById('output').innerHTML = "<p>No customers found.</p>";
-    return;
-  }
+      if (!Array.isArray(data) || data.length === 0) {
+        document.getElementById('output').innerHTML = "<p>No customers found.</p>";
+        return;
+      }
 
-  let table = `<table style="width: 100%; border-collapse: collapse;">
-    <thead>
-      <tr style="background-color: #2196f3; color: white;">
-        <th style="padding: 10px; border: 1px solid #ccc;">ID</th>
-        <th style="padding: 10px; border: 1px solid #ccc;">Username</th>
-        <th style="padding: 10px; border: 1px solid #ccc;">Email</th>
-        <th style="padding: 10px; border: 1px solid #ccc;">Password</th>
-      </tr>
-    </thead>
-    <tbody>`;
+      let table = `<table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background-color: #2196f3; color: white;">
+            <th style="padding: 10px; border: 1px solid #ccc;">ID</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">Username</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">Email</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">Password</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">Balance</th>
+          </tr>
+        </thead>
+        <tbody>`;
 
-  data.forEach(c => {
-    const date = new Date(c.registrationDate).toLocaleString();
-    table += `<tr>
-      <td style="padding: 10px; border: 1px solid #ccc;">${c.id}</td>
-      <td style="padding: 10px; border: 1px solid #ccc;">${c.username}</td>
-      <td style="padding: 10px; border: 1px solid #ccc;">${c.email}</td>
-      <td style="padding: 10px; border: 1px solid #ccc;">${c.password}</td>
-    </tr>`;
-  });
+      data.forEach(c => {
+        table += `<tr>
+          <td style="padding: 10px; border: 1px solid #ccc;">${c.id}</td>
+          <td style="padding: 10px; border: 1px solid #ccc;">${c.username}</td>
+          <td style="padding: 10px; border: 1px solid #ccc;">${c.email}</td>
+          <td style="padding: 10px; border: 1px solid #ccc;">${c.password}</td>
+          <td style="padding: 10px; border: 1px solid #ccc;">$${parseFloat(c.balance).toFixed(2)}</td>
+        </tr>`;
+      });
 
-  table += `</tbody></table>`;
-  document.getElementById('output').innerHTML = table;
-}
+      table += `</tbody></table>`;
+      document.getElementById('output').innerHTML = table;
+    }
 
+    // Fetch and display all representatives
+    async function getReps() {
+      const res = await fetch('http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/admin/reps');
+      const data = await res.json();
 
-   async function getReps() {
-  const res = await fetch('http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/admin/reps');
-  const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        document.getElementById('output').innerHTML = "<p>No representatives found.</p>";
+        return;
+      }
 
-  if (!Array.isArray(data) || data.length === 0) {
-    document.getElementById('output').innerHTML = "<p>No representatives found.</p>";
-    return;
-  }
+      let table = `<table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background-color: #4caf50; color: white;">
+            <th style="padding: 10px; border: 1px solid #ccc;">ID</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">Username</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">Password</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">Company</th>
+          </tr>
+        </thead>
+        <tbody>`;
 
-  let table = `<table style="width: 100%; border-collapse: collapse;">
-    <thead>
-      <tr style="background-color: #4caf50; color: white;">
-        <th style="padding: 10px; border: 1px solid #ccc;">ID</th>
-        <th style="padding: 10px; border: 1px solid #ccc;">Username</th>
-        <th style="padding: 10px; border: 1px solid #ccc;">Password</th>
-        <th style="padding: 10px; border: 1px solid #ccc;">Company</th>
-      </tr>
-    </thead>
-    <tbody>`;
+      data.forEach(rep => {
+        table += `<tr>
+          <td style="padding: 10px; border: 1px solid #ccc;">${rep.id}</td>
+          <td style="padding: 10px; border: 1px solid #ccc;">${rep.companyName}</td>
+          <td style="padding: 10px; border: 1px solid #ccc;">${rep.password}</td>
+          <td style="padding: 10px; border: 1px solid #ccc;">${rep.companyName}</td>
+        </tr>`;
+      });
 
-  data.forEach(rep => {
-    const date = new Date(rep.registrationDate).toLocaleString();
-    table += `<tr>
-  <td style="padding: 10px; border: 1px solid #ccc;">${rep.id}</td>
-  <td style="padding: 10px; border: 1px solid #ccc;">${rep.companyName}</td>
-  <td style="padding: 10px; border: 1px solid #ccc;">${rep.password}</td>
-  <td style="padding: 10px; border: 1px solid #ccc;">${rep.companyName}</td>
-</tr>`;
+      table += `</tbody></table>`;
+      document.getElementById('output').innerHTML = table;
+    }
 
-  });
-
-  table += `</tbody></table>`;
-  document.getElementById('output').innerHTML = table;
-}
-
-
+    // Handle create reps form submission
     const form = document.getElementById('createRepsForm');
     const resultDiv = document.getElementById('createRepsResult');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const input = document.getElementById('companyNames').value.trim();
+
       if (!input) {
         alert('Please enter at least one company name.');
         return;
       }
+
       const companies = input.split(',').map(name => name.trim()).filter(name => name.length > 0);
 
       try {
@@ -163,12 +212,16 @@
 
         if (res.ok) {
           const reps = await res.json();
-          let output = 'Created Representatives:\n\n';
+          let output = '<div class="card-container">';
           reps.forEach(rep => {
-            output += `Company: ${rep.companyName}\nPassword: ${rep.password}\n\n`;
+            output += `
+              <div class="rep-card">
+                <h3>${rep.companyName}</h3>
+                <p><strong>Password:</strong> ${rep.password}</p>
+              </div>`;
           });
-          resultDiv.style.color = 'green';
-          resultDiv.textContent = output;
+          output += '</div>';
+          resultDiv.innerHTML = output;
           form.reset();
         } else {
           resultDiv.style.color = 'red';

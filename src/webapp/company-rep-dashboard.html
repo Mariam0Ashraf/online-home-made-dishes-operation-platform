@@ -149,24 +149,27 @@ async function fetchSales() {
 
 
     document.getElementById("addDishForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const body = {
-        name: document.getElementById("dishName").value,
-        price: parseFloat(document.getElementById("dishPrice").value),
-        availableQuantity: parseInt(document.getElementById("dishQuantity").value),
-        companyRep: { id: parseInt(repId) }
-      };console.log(JSON.stringify(body));
+  e.preventDefault();
+
+  const body = {
+    name: document.getElementById("dishName").value,
+    price: parseFloat(document.getElementById("dishPrice").value),
+    availableQuantity: parseInt(document.getElementById("dishQuantity").value),
+  };
 
 
-      const res = await fetch("http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/dishes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
+  const res = await fetch("http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/rep/dishes", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
 
-      const text = await res.text();
-      alert(text);
-    });
+  const text = await res.text();
+  alert(text);
+});
+
 
     document.getElementById("updateDishForm").addEventListener("submit", async (e) => {
       e.preventDefault();

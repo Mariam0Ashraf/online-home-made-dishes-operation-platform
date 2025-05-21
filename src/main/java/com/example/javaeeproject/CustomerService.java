@@ -6,6 +6,7 @@ import com.rabbitmq.client.Connection;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 
 import java.math.BigDecimal;
@@ -23,6 +24,11 @@ public class CustomerService {
     private PaymentService paymentService;
 
     public void register(Customer customer) {
+        if (customer.getBalance() < 0) {
+            throw new IllegalArgumentException("Balance cannot be negative");
+        }
+        customer.setRegistrationDate(new Date());
+        em.persist(customer);
         customer.setRegistrationDate(new Date());
         em.persist(customer);
     }
@@ -120,6 +126,7 @@ public class CustomerService {
 
         return order;
     }
+
 
     public void confirmOrder(Long orderId) {
         Order order = em.find(Order.class, orderId);

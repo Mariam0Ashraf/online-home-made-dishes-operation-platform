@@ -17,7 +17,7 @@ public class Dish {
     private int availableQuantity;
     private boolean isActive = true;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     private CompanyRepresentative companyRep;
     public Dish() {}
 
