@@ -29,6 +29,7 @@ public class CompanyRepController {
         return Response.ok(service.getCurrentDishes(repId)).build();
     }
 
+
     @GET
     @Path("/sales/{repId}")
     public Response getSales(@PathParam("repId") Long repId) {
