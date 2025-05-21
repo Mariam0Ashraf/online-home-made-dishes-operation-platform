@@ -49,26 +49,19 @@ public class CustomerController {
 
     @POST
     @Path("/order/{customerId}")
-    public Response placeOrder(@PathParam("customerId") Long customerId, List<OrderItemDTO> itemDTOs) {
-        // Convert DTOs to OrderItems
-        List<OrderItem> items = itemDTOs.stream()
-                .map(dto -> {
-                    OrderItem item = new OrderItem();
-                    item.setDishId(dto.getDishId());
-                    item.setQuantity(dto.getQuantity());
-                    return item;
-                })
-                .collect(Collectors.toList());
-
+    public Response placeOrder(
+            @PathParam("customerId") Long customerId,
+            OrderRequest orderRequest
+    ) {
         if (!service.isLoggedIn() || !customerId.equals(service.getLoggedInCustomerId())) {
             return Response.status(Response.Status.UNAUTHORIZED)
                     .entity("You must be logged in as this customer").build();
         }
 
         try {
-            Order order = service.placeOrder(customerId, items);
-            return Response.ok(order).build();
-        } catch (Exception e) {
+            OrderDTO orderDTO = service.placeOrder(customerId, orderRequest.getItems());
+            return Response.ok(orderDTO).build();
+        } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(e.getMessage()).build();
         }

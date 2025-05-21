@@ -6,6 +6,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
 @Stateless
 public class CompanyRepresentativeService {
     @PersistenceContext
@@ -37,10 +39,16 @@ public class CompanyRepresentativeService {
                 .getResultList();
     }
 
-    public List<Order> getSoldDishesWithCustomerAndShipping(Long repId) {
-        return em.createQuery("SELECT DISTINCT o FROM Order o JOIN o.items i WHERE i.dish.companyRep.id = :repId", Order.class)
+    public List<OrderDTO> getSoldDishesWithCustomerAndShipping(Long repId) {
+        List<Order> orders = em.createQuery(
+                        "SELECT DISTINCT o FROM Order o JOIN o.items i WHERE i.dish.companyRep.id = :repId",
+                        Order.class)
                 .setParameter("repId", repId)
                 .getResultList();
+
+        return orders.stream()
+                .map(OrderDTO::new)
+                .collect(Collectors.toList());
     }
 
     public void addDish(Dish dish) {

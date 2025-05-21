@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Stateless
 public class CustomerService {
@@ -51,98 +52,54 @@ public class CustomerService {
         return loggedInCustomer != null ? loggedInCustomer.getId() : null;
     }
 
-    public List<Order> getCurrentAndPastOrders(Long customerId) {
-        return em.createQuery("SELECT o FROM Order o WHERE o.customer.id = :cid", Order.class)
+    public List<OrderDTO> getCurrentAndPastOrders(Long customerId) {
+        List<Order> orders = em.createQuery("SELECT o FROM Order o WHERE o.customer.id = :cid", Order.class)
                 .setParameter("cid", customerId)
                 .getResultList();
+
+        return orders.stream()
+                .map(OrderDTO::new)
+                .collect(Collectors.toList());
     }
 
-    public Order placeOrder(Long customerId, List<OrderItem> items) {
-        Customer customer = em.find(Customer.class, customerId);
+    public OrderDTO placeOrder(Long customerId, List<OrderItemDTO> itemsDto) {
+        if (!isLoggedIn() || !customerId.equals(getLoggedInCustomerId())) {
+            throw new IllegalArgumentException("You must be logged in as this customer");
+        }
+
         Order order = new Order();
+        Customer customer = em.find(Customer.class, customerId);
         order.setCustomer(customer);
         order.setOrderDate(new Date());
-        order.setStatus("PENDING");
+        order.setStatus("PLACED");
         order.setItems(new ArrayList<>());
+        em.persist(order);
 
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        BigDecimal minimumCharge = new BigDecimal("0.00");
-
-        List<Dish> dishesWithCompanyRep = new ArrayList<>();
-
-        for (OrderItem item : items) {
-            Dish dish;
-            try {
-                dish = em.createQuery(
-                                "SELECT d FROM Dish d LEFT JOIN FETCH d.companyRep WHERE d.id = :id", Dish.class)
-                        .setParameter("id", item.getDish().getId())
-                        .getSingleResult();
-            } catch (NoResultException e) {
-                throw new IllegalArgumentException("Dish with id " + item.getDish().getId() + " not found");
+        for (OrderItemDTO dto : itemsDto) {
+            Dish dish = em.find(Dish.class, dto.getDishId());
+            if (dish == null || !dish.isActive()) {
+                throw new IllegalArgumentException("Dish with id " + dto.getDishId() + " not found");
+            }
+            if (dish.getAvailableQuantity() < dto.getQuantity()) {
+                throw new IllegalArgumentException("Not enough quantity for dish " + dish.getName());
             }
 
-            if (dish == null || dish.getAvailableQuantity() < item.getQuantity()) {
-                order.setStatus("CANCELLED");
-                em.persist(order);
-                throw new IllegalArgumentException("Insufficient stock for dish: " + (dish != null ? dish.getName() : ""));
-            }
-
-            dishesWithCompanyRep.add(dish);
-            totalAmount = totalAmount.add(BigDecimal.valueOf(dish.getPrice()).multiply(BigDecimal.valueOf(item.getQuantity())));
-        }
-
-        if (totalAmount.compareTo(minimumCharge) < 0) {
-            order.setStatus("CANCELLED");
-            em.persist(order);
-            throw new IllegalArgumentException("Order total must be at least $" + minimumCharge);
-        }
-
-        if (!paymentService.processPayment(order)) {
-            order.setStatus("CANCELLED");
-            em.persist(order);
-            throw new RuntimeException("Payment failed");
-        }
-
-        for (int i = 0; i < items.size(); i++) {
-            OrderItem item = items.get(i);
-            Dish dish = dishesWithCompanyRep.get(i); // this version includes companyRep
-
-            dish.setAvailableQuantity(dish.getAvailableQuantity() - item.getQuantity());
+            dish.setAvailableQuantity(dish.getAvailableQuantity() - dto.getQuantity());
             em.merge(dish);
 
-            item.setOrder(order);
-            item.setDish(dish); // ensure correct dish object
+            OrderItem item = new OrderItem();
+            item.setDish(dish);
+            item.setQuantity(dto.getQuantity());
             item.setPriceAtPurchase(dish.getPrice());
+            item.setOrder(order);
+            em.persist(item);
+
             order.getItems().add(item);
         }
 
-        if (!dishesWithCompanyRep.isEmpty()) {
-            Dish firstDish = dishesWithCompanyRep.get(0);
-            order.setShippingCompanyName(firstDish.getCompanyRep().getCompanyName());
-        }
-
-        order.setStatus("CONFIRMED");
-        em.persist(order);
-
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            String orderJson = mapper.writeValueAsString(order);
-            try (Connection conn = RabbitMQService.getConnection();
-                 Channel channel = conn.createChannel()) {
-
-                channel.exchangeDeclare("order_exchange", "direct", true);
-                channel.basicPublish("order_exchange", "OrderPlaced", null, orderJson.getBytes());
-
-                System.out.println("Order published to RabbitMQ: " + order.getId());
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return order;
+        em.merge(order);
+        return new OrderDTO(order);
     }
-
 
     public void confirmOrder(Long orderId) {
         Order order = em.find(Order.class, orderId);

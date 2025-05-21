@@ -3,6 +3,7 @@ package com.example.javaeeproject;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
@@ -17,7 +18,8 @@ public class Dish {
     private int availableQuantity;
     private boolean isActive = true;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    @NotNull
     private CompanyRepresentative companyRep;
     public Dish() {}
 

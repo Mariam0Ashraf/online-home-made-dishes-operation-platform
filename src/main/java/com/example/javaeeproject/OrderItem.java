@@ -13,7 +13,7 @@ public class OrderItem {
     private Long id;
 
     @ManyToOne
-    @JsonIgnoreProperties({"companyRep", "orderItems"})
+  //  @JsonIgnoreProperties({"companyRep", "orderItems"})
     private Dish dish;
 
 
