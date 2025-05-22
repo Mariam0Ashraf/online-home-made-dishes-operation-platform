@@ -116,6 +116,11 @@
 
 <div id="createRepsResult"></div>
 
+<h2>Admin Logs & Notifications</h2>
+<button onclick="fetchAdminLogs()">View Admin Logs</button>
+<div id="adminLogsOutput" style="margin-top: 10px;"></div>
+
+
 <script>
     localStorage.getItem("isAdmin") === "true"
     // Fetch and display all customers
@@ -232,6 +237,30 @@
         resultDiv.textContent = 'Error: ' + error.message;
       }
     });
+    async function fetchAdminLogs() {
+    try {
+      const res = await fetch("http://127.0.0.1:8080/javaEEProject-1.0-SNAPSHOT/api/logs");
+      const text = await res.text();
+const data = text ? JSON.parse(text) : [];
+
+      if (!Array.isArray(data) || data.length === 0) {
+        document.getElementById("adminLogsOutput").innerHTML = "<p>No logs found.</p>";
+        return;
+      }
+
+      let html = '<ul style="list-style: none; padding: 0;">';
+      data.forEach((log, idx) => {
+        html += `<li style="background: #fff; margin-bottom: 10px; padding: 10px; border-left: 5px solid #f44336;">
+          <strong>Log ${idx + 1}:</strong> ${log}
+        </li>`;
+      });
+      html += '</ul>';
+
+      document.getElementById("adminLogsOutput").innerHTML = html;
+    } catch (error) {
+      document.getElementById("adminLogsOutput").innerHTML = `<p style="color:red;">Failed to fetch logs: ${error.message}</p>`;
+    }
+  }
 </script>
 </body>
 </html>
