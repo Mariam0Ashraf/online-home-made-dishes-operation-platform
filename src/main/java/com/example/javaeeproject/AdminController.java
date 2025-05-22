@@ -37,9 +37,7 @@ public class AdminController {
     @POST
     @Path("/create-reps")
     public Response createReps(List<String> companyNames) {
-        if (!service.isLoggedIn()) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("You must log in first").build();
-        }
+
         List<CompanyRepresentative> reps = service.createCompanyRepresentatives(companyNames);
         return Response.ok(reps).build();
     }
@@ -47,18 +45,14 @@ public class AdminController {
     @GET
     @Path("/customers")
     public Response getCustomers() {
-        if (!service.isLoggedIn()) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("You must log in first").build();
-        }
+
         return Response.ok(service.listAllCustomers()).build();
     }
 
     @GET
     @Path("/reps")
     public Response getReps() {
-        if (!service.isLoggedIn()) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("You must log in first").build();
-        }
+
         return Response.ok(service.listAllCompanyRepresentatives()).build();
     }
 }

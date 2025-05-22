@@ -2,6 +2,7 @@ package com.example.javaeeproject;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import jakarta.annotation.PostConstruct;
 import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
 import jakarta.persistence.EntityManager;
@@ -18,6 +19,7 @@ public class InventoryService {
     @PersistenceContext
     private EntityManager em;
 
+    @PostConstruct
     public void start() throws Exception {
         Connection conn = RabbitMQService.getConnection();
         Channel channel = conn.createChannel();

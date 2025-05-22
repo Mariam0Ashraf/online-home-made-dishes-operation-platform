@@ -99,7 +99,7 @@
            </ul>
          </div>
          ${
-  order.status === 'PENDING'
+  order.status === 'CREATED'
     ? `<button onclick="confirmOrder(${order.id})">Confirm Order</button>`
     : order.status === 'STOCK_CONFIRMED'
       ? `<p style="color: green;"><strong>Order confirmed!</strong></p>`

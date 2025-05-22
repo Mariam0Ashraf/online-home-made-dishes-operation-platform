@@ -1,6 +1,7 @@
 package com.example.javaeeproject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import jakarta.annotation.PostConstruct;
 import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
 import jakarta.persistence.EntityManager;
@@ -14,6 +15,7 @@ public class OrderServiceOrchestrator {
     @PersistenceContext
     private EntityManager em;
 
+    @PostConstruct
     public void start() throws Exception {
         Connection conn = RabbitMQService.getConnection();
         Channel channel = conn.createChannel();
@@ -29,7 +31,8 @@ public class OrderServiceOrchestrator {
             Order order = new ObjectMapper().readValue(msg, Order.class);
 
             if ("StockConfirmed".equals(delivery.getEnvelope().getRoutingKey())) {
-                channel.basicPublish("payment_exchange", "ProcessPayment", null, msg.getBytes(StandardCharsets.UTF_8));
+                // Correct the exchange name here
+                channel.basicPublish("payments_exchange", "ProcessPayment", null, msg.getBytes(StandardCharsets.UTF_8));
                 updateOrderStatus(order.getId(), "PENDING_PAYMENT");
             } else {
                 updateOrderStatus(order.getId(), "CANCELLED");
