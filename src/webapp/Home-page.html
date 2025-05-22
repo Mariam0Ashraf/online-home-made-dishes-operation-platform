@@ -98,7 +98,16 @@
                </li>`).join("")}
            </ul>
          </div>
-         ${order.status === 'PENDING' ? `<button onclick="confirmOrder(${order.id})">Confirm Order</button>` : ''}
+         ${
+  order.status === 'PENDING'
+    ? `<button onclick="confirmOrder(${order.id})">Confirm Order</button>`
+    : order.status === 'STOCK_CONFIRMED'
+      ? `<p style="color: green;"><strong>Order confirmed!</strong></p>`
+      : order.status === 'CANCELLED'
+        ? `<p style="color: red;"><strong>Insufficient stock. Order cancelled.</strong></p>`
+        : ''
+}
+
        `;
        container.appendChild(div);
      });
@@ -190,10 +199,10 @@
     });
 
     if (res.ok) {
-      alert("Order placed successfully!");
-      document.getElementById("orderForm").reset();
-      fetchOrders();
-    } else {
+  alert("Order placed successfully! Please wait for confirmation...");
+  document.getElementById("orderForm").reset();
+  fetchOrders();
+} else {
       const errorText = await res.text();
       alert("Failed to place order: " + errorText);
     }
@@ -206,6 +215,8 @@
          fetchOrders();
          fetchDishes();
          document.getElementById("orderForm").addEventListener("submit", placeOrder);
+    setInterval(fetchOrders, 10000);
+
 </script>
 
 </body>
