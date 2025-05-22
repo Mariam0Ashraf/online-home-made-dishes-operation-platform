@@ -18,11 +18,11 @@ public class RabbitMQService {
         try (Connection conn = getConnection();
              Channel channel = conn.createChannel()) {
 
-            channel.exchangeDeclare("order_exchange", "direct", true);
-            channel.exchangeDeclare("inventory_exchange", "direct", true);
-            channel.exchangeDeclare("payments_exchange", "direct", true);
-            channel.exchangeDeclare("log_exchange", "topic", true);
-            channel.exchangeDeclare("notifications_exchange", "direct", true);
+            channel.exchangeDeclare("order_exchange", "direct");
+            channel.exchangeDeclare("inventory_exchange", "direct");
+            channel.exchangeDeclare("payments_exchange", "direct");
+            channel.exchangeDeclare("log_exchange", "topic");
+            channel.exchangeDeclare("notifications_exchange", "direct");
 
             channel.queueDeclare("order_queue", false, false, false, null);
             channel.queueDeclare("inventory_queue", false, false, false, null);
